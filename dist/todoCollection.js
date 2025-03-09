@@ -10,7 +10,7 @@ class TodoCollection {
         todoItems.forEach((item) => this.itemMap.set(item.id, item));
     }
     addTodo(task) {
-        while (this.getTodoById(this.nextId)) {
+        while (this.itemMap.has(this.nextId)) {
             this.nextId++;
         }
         this.itemMap.set(this.nextId, new todoItem_1.TodoItem(this.nextId, task));
