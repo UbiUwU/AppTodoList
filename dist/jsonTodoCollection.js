@@ -1,18 +1,15 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.JsonTodoCollection = void 0;
-const todoItem_1 = require("./todoItem");
-const todoCollection_1 = require("./todoCollection");
-const lowdb = require("lowdb");
-const FileSync = require("lowdb/adapters/FileSync");
-class JsonTodoCollection extends todoCollection_1.TodoCollection {
+import { TodoItem } from "./todoItem";
+import { TodoCollection } from "./todoCollection";
+import * as lowdb from "lowdb";
+import * as FileSync from "lowdb/adapters/FileSync";
+export class JsonTodoCollection extends TodoCollection {
     constructor(userName, todoItems = []) {
         super(userName, []);
         this.userName = userName;
         this.database = lowdb(new FileSync("Todos.json"));
         if (this.database.has("tasks").value()) {
             let dbItems = this.database.get("tasks").value();
-            dbItems.forEach((item) => this.itemMap.set(item.id, new todoItem_1.TodoItem(item.id, item.task, item.complete)));
+            dbItems.forEach((item) => this.itemMap.set(item.id, new TodoItem(item.id, item.task, item.complete)));
         }
         else {
             this.database.set("tasks", todoItems).write();
@@ -36,4 +33,3 @@ class JsonTodoCollection extends todoCollection_1.TodoCollection {
         this.database.set("tasks", [...this.itemMap.values()]).write();
     }
 }
-exports.JsonTodoCollection = JsonTodoCollection;

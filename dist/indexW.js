@@ -1,75 +1,91 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const todoItem_1 = require("./todoItem");
-const jsonTodoCollection_1 = require("./jsonTodoCollection");
+import { TodoItem } from "./todoItem.js";
+import { TodoCollection } from "./todoCollection.js";
+
 let todos = [
-    new todoItem_1.TodoItem(1, "Buy Flowers"),
-    new todoItem_1.TodoItem(2, "Get Shoes"),
-    new todoItem_1.TodoItem(3, "Collect Tickets"),
-    new todoItem_1.TodoItem(4, "Call Joe", true),
+    new TodoItem(1, "Buy Flowers"),
+    new TodoItem(2, "Get Shoes"),
+    new TodoItem(3, "Collect Tickets"),
+    new TodoItem(4, "Call Joe", true),
 ];
-let collection = new jsonTodoCollection_1.JsonTodoCollection("Adam", todos);
+let collection = new TodoCollection("Adam", todos);
 let showCompleted = true;
-// Función para mostrar la lista de tareas en la consola (opcional)
-function displayTodoList() {
-    console.log(`${collection.userName}'s Todo List ` +
-        `(${collection.getItemCounts().incomplete} items to do)`);
-    collection.getTodoItems(showCompleted).forEach((item) => item.printDetails());
-}
-// Función para renderizar la lista de tareas en el HTML
+let tasksToDelete = [];
 function renderTodoList() {
     const todoListElement = document.getElementById("todo-list");
     if (todoListElement) {
-        todoListElement.innerHTML = ""; // Limpiar la lista antes de renderizar
-        collection.getTodoItems(showCompleted).forEach((item) => {
-            var _a;
+        todoListElement.innerHTML = "";
+        collection.getTodoItems(showCompleted).forEach(item => {
+            var _a, _b;
             const taskElement = document.createElement("div");
             taskElement.className = "task";
             taskElement.innerHTML = `
-        <input type="checkbox" ${item.complete ? "checked" : ""} id="task-${item.id}">
-        <label for="task-${item.id}">${item.task}</label>
+        <input type="checkbox" id="task-${item.id}" ${item.complete ? "checked" : ""}>
+        <label for="task-${item.id}" class="${item.complete ? "completed" : ""}">${item.task}</label>
       `;
             (_a = taskElement.querySelector("input")) === null || _a === void 0 ? void 0 : _a.addEventListener("change", () => {
-                collection.markComplete(item.id, !item.complete);
-                renderTodoList(); // Volver a renderizar la lista después de marcar como completada
+                collection.markComplete(item.id);
+                renderTodoList();
+            });
+            if (item.complete) {
+                const label = taskElement.querySelector("label");
+                if (label)
+                    label.innerHTML += " (Tarea completada)";
+            }
+            (_b = taskElement.querySelector("input")) === null || _b === void 0 ? void 0 : _b.addEventListener("click", (e) => {
+                const checkbox = e.target;
+                if (checkbox.checked) {
+                    tasksToDelete.push(item.id);
+                }
+                else {
+                    tasksToDelete = tasksToDelete.filter(id => id !== item.id);
+                }
             });
             todoListElement.appendChild(taskElement);
         });
     }
 }
-// Función para agregar una nueva tarea
-function addNewTask(task) {
+function addNewTask() {
+    const task = prompt("Ingrese una nueva tarea:");
     if (task) {
         collection.addTodo(task);
-        renderTodoList(); // Volver a renderizar la lista después de agregar una tarea
+        renderTodoList();
     }
 }
-// Función para eliminar tareas completadas
-function purgeCompletedTasks() {
-    collection.removeComplete();
-    renderTodoList(); // Volver a renderizar la lista después de eliminar tareas completadas
-}
-// Eventos del DOM
-document.addEventListener("DOMContentLoaded", () => {
-    const addTaskButton = document.getElementById("add-task");
-    const toggleCompletedButton = document.getElementById("toggle-completed");
-    const purgeCompletedButton = document.getElementById("purge-completed");
-    // Renderizar la lista de tareas al cargar la página
-    renderTodoList();
-    // Agregar una nueva tarea
-    addTaskButton === null || addTaskButton === void 0 ? void 0 : addTaskButton.addEventListener("click", () => {
-        const task = prompt("Enter a new task:");
-        if (task) {
-            addNewTask(task);
+function deleteSelectedTasks() {
+    if (tasksToDelete.length > 0) {
+        const confirmed = window.confirm("¿Seguro que deseas eliminar las tareas seleccionadas?");
+        if (confirmed) {
+            collection.deleteSelected(tasksToDelete);
+            tasksToDelete = [];
+            renderTodoList();
         }
-    });
-    // Mostrar/ocultar tareas completadas
-    toggleCompletedButton === null || toggleCompletedButton === void 0 ? void 0 : toggleCompletedButton.addEventListener("click", () => {
-        showCompleted = !showCompleted;
-        renderTodoList();
-    });
-    // Eliminar tareas completadas
-    purgeCompletedButton === null || purgeCompletedButton === void 0 ? void 0 : purgeCompletedButton.addEventListener("click", () => {
-        purgeCompletedTasks();
-    });
+    }
+    else {
+        alert("No hay tareas seleccionadas para eliminar.");
+    }
+}
+function toggleCompleted() {
+    showCompleted = !showCompleted;
+    renderTodoList();
+}
+function toggleMarkCompletedButton() {
+    const markCompletedButton = document.getElementById("mark-completed");
+    if (markCompletedButton.classList.contains("normal-button")) {
+        markCompletedButton.classList.remove("normal-button");
+        markCompletedButton.classList.add("completed-button");
+        markCompletedButton.innerHTML = "✔️ Finalizar Marcado";
+    }
+    else {
+        markCompletedButton.classList.remove("completed-button");
+        markCompletedButton.classList.add("normal-button");
+        markCompletedButton.innerHTML = "✔️ Marcar Completadas";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("add-task").addEventListener("click", addNewTask);
+    document.getElementById("toggle-completed").addEventListener("click", toggleCompleted);
+    document.getElementById("mark-completed").addEventListener("click", toggleMarkCompletedButton);
+    document.getElementById("delete-tasks").addEventListener("click", deleteSelectedTasks);
+    renderTodoList(); 
 });

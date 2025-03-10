@@ -6,6 +6,9 @@ export class TodoItem {
   ) {
     // no statements required
   }
+  toggleComplete() {
+    this.complete = !this.complete;
+  }
   printDetails(): void {
     console.log(
       `${this.id}\t${this.task} ${this.complete ? "\t(complete)" : ""}`

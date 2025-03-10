@@ -35,10 +35,10 @@ export class TodoCollection {
     );
   }
 
-  markComplete(id: number, complete: boolean) {
-    const todoItem = this.getTodoById(id);
-    if (todoItem) {
-      todoItem.complete = complete;
+  markComplete(id: number) {
+    const task = this.getTodoItems(true).find(item => item.id === id);
+    if (task) {
+      task.toggleComplete();
     }
   }
 
@@ -55,5 +55,16 @@ export class TodoCollection {
       total: this.itemMap.size,
       incomplete: this.getTodoItems(false).length,
     };
+  }
+  deleteSelected(ids: number[]): void {
+    this.itemMap.forEach((item, id) => {
+      if (ids.includes(id)) {
+        this.itemMap.delete(id);
+      }
+    });
+  }
+
+  getSelectedTasks(ids: number[]): TodoItem[] {
+    return this.getTodoItems(true).filter(item => ids.includes(item.id));
   }
 }

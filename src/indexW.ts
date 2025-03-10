@@ -1,87 +1,101 @@
 import { TodoItem } from "./todoItem";
 import { TodoCollection } from "./todoCollection";
-import { JsonTodoCollection } from "./jsonTodoCollection";
 
 let todos: TodoItem[] = [
   new TodoItem(1, "Buy Flowers"),
   new TodoItem(2, "Get Shoes"),
   new TodoItem(3, "Collect Tickets"),
-  new TodoItem(4, "Call Joe", true),
+  new TodoItem(4, "Call Joe", true), 
 ];
 
-let collection: TodoCollection = new JsonTodoCollection("Adam", todos);
+let collection: TodoCollection = new TodoCollection("Adam", todos);
+
 let showCompleted = true;
+let tasksToDelete: number[] = [];
 
-// Función para mostrar la lista de tareas en la consola (opcional)
-function displayTodoList(): void {
-  console.log(
-    `${collection.userName}'s Todo List ` +
-      `(${collection.getItemCounts().incomplete} items to do)`
-  );
-  collection.getTodoItems(showCompleted).forEach((item) => item.printDetails());
-}
-
-// Función para renderizar la lista de tareas en el HTML
 function renderTodoList(): void {
   const todoListElement = document.getElementById("todo-list");
   if (todoListElement) {
-    todoListElement.innerHTML = ""; // Limpiar la lista antes de renderizar
+    todoListElement.innerHTML = "";
 
-    collection.getTodoItems(showCompleted).forEach((item) => {
+    collection.getTodoItems(showCompleted).forEach(item => {
       const taskElement = document.createElement("div");
       taskElement.className = "task";
       taskElement.innerHTML = `
-        <input type="checkbox" ${item.complete ? "checked" : ""} id="task-${item.id}">
-        <label for="task-${item.id}">${item.task}</label>
+        <input type="checkbox" id="task-${item.id}" ${item.complete ? "checked" : ""}>
+        <label for="task-${item.id}" class="${item.complete ? "completed" : ""}">${item.task}</label>
       `;
+
+      
       taskElement.querySelector("input")?.addEventListener("change", () => {
-        collection.markComplete(item.id, !item.complete);
-        renderTodoList(); // Volver a renderizar la lista después de marcar como completada
+        collection.markComplete(item.id);
+        renderTodoList();
       });
+
+   
+      if (item.complete) {
+        const label = taskElement.querySelector("label");
+        if (label) label.innerHTML += " (Tarea completada)";
+      }
+
+      taskElement.querySelector("input")?.addEventListener("click", (e) => {
+        const checkbox = e.target as HTMLInputElement;
+        if (checkbox.checked) {
+          tasksToDelete.push(item.id);
+        } else {
+          tasksToDelete = tasksToDelete.filter(id => id !== item.id);
+        }
+      });
+
       todoListElement.appendChild(taskElement);
     });
   }
 }
 
-// Función para agregar una nueva tarea
-function addNewTask(task: string): void {
+function addNewTask(): void {
+  const task = prompt("Ingrese una nueva tarea:");
   if (task) {
     collection.addTodo(task);
-    renderTodoList(); // Volver a renderizar la lista después de agregar una tarea
+    renderTodoList();
   }
 }
 
-// Función para eliminar tareas completadas
-function purgeCompletedTasks(): void {
-  collection.removeComplete();
-  renderTodoList(); // Volver a renderizar la lista después de eliminar tareas completadas
+function deleteSelectedTasks(): void {
+  if (tasksToDelete.length > 0) {
+    const confirmed = window.confirm("¿Seguro que deseas eliminar las tareas seleccionadas?");
+    if (confirmed) {
+      collection.deleteSelected(tasksToDelete);
+      tasksToDelete = [];
+      renderTodoList();
+    }
+  } else {
+    alert("No hay tareas seleccionadas para eliminar.");
+  }
 }
 
-// Eventos del DOM
-document.addEventListener("DOMContentLoaded", () => {
-  const addTaskButton = document.getElementById("add-task");
-  const toggleCompletedButton = document.getElementById("toggle-completed");
-  const purgeCompletedButton = document.getElementById("purge-completed");
-
-  // Renderizar la lista de tareas al cargar la página
+function toggleCompleted(): void {
+  showCompleted = !showCompleted;
   renderTodoList();
+}
 
-  // Agregar una nueva tarea
-  addTaskButton?.addEventListener("click", () => {
-    const task = prompt("Enter a new task:");
-    if (task) {
-      addNewTask(task);
-    }
-  });
+function toggleMarkCompletedButton() {
+  const markCompletedButton = document.getElementById("mark-completed")!;
+  if (markCompletedButton.classList.contains("normal-button")) {
+    markCompletedButton.classList.remove("normal-button");
+    markCompletedButton.classList.add("completed-button");
+    markCompletedButton.innerHTML = "✔️ Finalizar Marcado";
+  } else {
+    markCompletedButton.classList.remove("completed-button");
+    markCompletedButton.classList.add("normal-button");
+    markCompletedButton.innerHTML = "✔️ Marcar Completadas";
+  }
+}
 
-  // Mostrar/ocultar tareas completadas
-  toggleCompletedButton?.addEventListener("click", () => {
-    showCompleted = !showCompleted;
-    renderTodoList();
-  });
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("add-task")!.addEventListener("click", addNewTask);
+  document.getElementById("toggle-completed")!.addEventListener("click", toggleCompleted);
+  document.getElementById("mark-completed")!.addEventListener("click", toggleMarkCompletedButton);
+  document.getElementById("delete-tasks")!.addEventListener("click", deleteSelectedTasks);
 
-  // Eliminar tareas completadas
-  purgeCompletedButton?.addEventListener("click", () => {
-    purgeCompletedTasks();
-  });
+  renderTodoList();
 });
